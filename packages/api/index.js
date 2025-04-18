@@ -13,6 +13,7 @@ app.use(cors({
 }));
 
 
+
 app.use(express.json());
 
 app.use(session({
@@ -130,6 +131,10 @@ app.put('/users/:id', isAuthenticated, (req, res) => {
     if (err) return res.status(500).json({ message: 'Update failed' });
     res.json({ message: 'User updated' });
   });
+});
+// Optional: health check route
+app.get('/', (req, res) => {
+  res.send('API is up and running 🚀');
 });
 
 const port = process.env.PORT || 4000;
