@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-frontend:
+    name: 🔧 Build Frontend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/web
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install deps
+        run: yarn install
+      - name: Build web
+        run: yarn build
+
+  check-backend:
+    name: 🛠 Boot Backend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/api
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install deps
+        run: yarn install
+      - name: Check index.js
+        run: node -e "require('./index.js')"
