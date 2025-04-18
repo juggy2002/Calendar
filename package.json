@@ -1,0 +1,14 @@
+{
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "start:api": "node packages/api/index.js",
+    "start:web": "yarn workspace web start",
+    "start": "concurrently \"yarn run start:api\" \"yarn run start:web\""
+  },
+  "dependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
