@@ -66,6 +66,29 @@ export async function updateUser(id, data) {
   return await res.json();
 }
 
+/** Events **/
+
+// Fetch all events for the current user
+export async function getEvents() {
+  const res = await fetch(`${API_URL}/events`, {
+    credentials: 'include'
+  });
+  if (!res.ok) throw new Error('Could not fetch events');
+  return await res.json(); // [{ id, title, date }, …]
+}
+
+// Create a new event
+export async function createEvent(title, date) {
+  const res = await fetch(`${API_URL}/events`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title, date })
+  });
+  if (!res.ok) throw new Error((await res.json()).message);
+  return await res.json(); // { id, title, date }
+}
+
 /** Messages (Ping / Inbox) **/
 
 // Send a ping (message) to a user
