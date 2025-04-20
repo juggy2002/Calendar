@@ -1,4 +1,5 @@
 // packages/api/index.js
+
 const express = require('express');
 const session = require('express-session');
 const sqlite3 = require('sqlite3').verbose();
@@ -65,7 +66,7 @@ app.post('/login', (req, res) => {
 
       req.session.userId = user.id;
 
-      // ✅ force the cookie to be set before we reply
+      // force the cookie to be set before we reply
       req.session.save(saveErr => {
         if (saveErr) {
           console.error('Session save error:', saveErr);
@@ -166,9 +167,8 @@ app.put('/users/:id', isAuthenticated, (req, res) => {
     res.json({ message: 'User updated' });
   });
 });
-// ─────────────── Events persistence ───────────────
 
-// Create events table (if it doesn’t exist yet)
+// ───────── Events persistence ───────────────────────
 db.serialize(() => {
   db.run(`CREATE TABLE IF NOT EXISTS events (
     id      INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -179,7 +179,6 @@ db.serialize(() => {
   )`);
 });
 
-// GET /events — return all events for the current user
 app.get('/events', isAuthenticated, (req, res) => {
   db.all(
     'SELECT id, title, date FROM events WHERE userId = ? ORDER BY date',
@@ -191,7 +190,6 @@ app.get('/events', isAuthenticated, (req, res) => {
   );
 });
 
-// POST /events — create a new event for the current user
 app.post('/events', isAuthenticated, (req, res) => {
   const { title, date } = req.body;
   db.run(
@@ -199,8 +197,68 @@ app.post('/events', isAuthenticated, (req, res) => {
     [req.session.userId, title, date],
     function(err) {
       if (err) return res.status(500).json({ message: 'Error creating event' });
-      // Return the newly created event
       res.json({ id: this.lastID, title, date });
+    }
+  );
+});
+
+// ───────── Messages persistence ──────────────────────
+db.serialize(() => {
+  db.run(`CREATE TABLE IF NOT EXISTS messages (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    toUserId   INTEGER,
+    fromUserId INTEGER,
+    content    TEXT,
+    read       INTEGER DEFAULT 0,
+    createdAt  TEXT    DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(toUserId)   REFERENCES users(id),
+    FOREIGN KEY(fromUserId) REFERENCES users(id)
+  )`);
+});
+
+app.get('/messages', isAuthenticated, (req, res) => {
+  db.all(
+    `SELECT m.id, m.fromUserId, u.username AS fromUsername,
+            m.content, m.read, m.createdAt
+     FROM messages m
+     JOIN users u ON m.fromUserId = u.id
+     WHERE m.toUserId = ?
+     ORDER BY m.createdAt DESC`,
+    [req.session.userId],
+    (err, rows) => {
+      if (err) return res.status(500).json({ message: 'Error fetching messages' });
+      res.json(rows);
+    }
+  );
+});
+
+app.post('/messages', isAuthenticated, (req, res) => {
+  const { toUserId, content } = req.body;
+  const fromUserId = req.session.userId;
+  db.run(
+    'INSERT INTO messages(toUserId, fromUserId, content) VALUES(?, ?, ?)',
+    [toUserId, fromUserId, content],
+    function(err) {
+      if (err) return res.status(500).json({ message: 'Error sending message' });
+      res.json({
+        id: this.lastID,
+        toUserId,
+        fromUserId,
+        content,
+        read: 0,
+        createdAt: new Date().toISOString()
+      });
+    }
+  );
+});
+
+app.post('/messages/:id/read', isAuthenticated, (req, res) => {
+  db.run(
+    'UPDATE messages SET read = 1 WHERE id = ? AND toUserId = ?',
+    [req.params.id, req.session.userId],
+    function(err) {
+      if (err) return res.status(500).json({ message: 'Error marking as read' });
+      res.json({ success: true });
     }
   );
 });
