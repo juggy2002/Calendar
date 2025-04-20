@@ -4,7 +4,10 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 
 export default function PortalPage({ user, onLogout }) {
+  const [events, setEvents] = useState([]);
   const [showAddEvent, setShowAddEvent] = useState(false);
+  const [newTitle, setNewTitle] = useState('');
+  const [newDate, setNewDate] = useState('');
   const [showPingUser, setShowPingUser] = useState(false);
   const [showInbox, setShowInbox] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -18,6 +21,15 @@ export default function PortalPage({ user, onLogout }) {
       </div>
     </div>
   );
+
+  const handleSaveEvent = () => {
+    if (newTitle && newDate) {
+      setEvents(prev => [...prev, { title: newTitle, date: newDate }]);
+      setNewTitle('');
+      setNewDate('');
+      setShowAddEvent(false);
+    }
+  };
 
   return (
     <div style={styles.container}>
@@ -35,7 +47,7 @@ export default function PortalPage({ user, onLogout }) {
           <button style={styles.actionButton} onClick={() => setShowNotifications(true)}>
             <span style={styles.dotPink}></span> Notifications
           </button>
-          <button style={{...styles.actionButton, color: '#e74c3c'}} onClick={onLogout}>
+          <button style={{ ...styles.actionButton, color: '#e74c3c' }} onClick={onLogout}>
             <span style={styles.dotRed}></span> Logout
           </button>
         </div>
@@ -50,15 +62,26 @@ export default function PortalPage({ user, onLogout }) {
             plugins={[dayGridPlugin, interactionPlugin]}
             initialView="dayGridMonth"
             height="100%"
+            events={events}
           />
         </div>
       </div>
 
       {showAddEvent && (
         <Modal title="Create Event" onClose={() => setShowAddEvent(false)}>
-          <input placeholder="Event Title" style={styles.input} />
-          <input type="date" style={styles.input} />
-          <button style={styles.saveButton}>Save</button>
+          <input
+            placeholder="Event Title"
+            style={styles.input}
+            value={newTitle}
+            onChange={e => setNewTitle(e.target.value)}
+          />
+          <input
+            type="date"
+            style={styles.input}
+            value={newDate}
+            onChange={e => setNewDate(e.target.value)}
+          />
+          <button style={styles.saveButton} onClick={handleSaveEvent}>Save</button>
         </Modal>
       )}
 
