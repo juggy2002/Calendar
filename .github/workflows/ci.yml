@@ -20,7 +20,7 @@ jobs:
       - name: Build web
         run: yarn build
 
-    check-backend:
+  check-backend:
     name: 🛠 Check Backend
     runs-on: ubuntu-latest
     defaults:
