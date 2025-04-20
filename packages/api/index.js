@@ -166,6 +166,44 @@ app.put('/users/:id', isAuthenticated, (req, res) => {
     res.json({ message: 'User updated' });
   });
 });
+// ─────────────── Events persistence ───────────────
+
+// Create events table (if it doesn’t exist yet)
+db.serialize(() => {
+  db.run(`CREATE TABLE IF NOT EXISTS events (
+    id      INTEGER PRIMARY KEY AUTOINCREMENT,
+    userId  INTEGER,
+    title   TEXT,
+    date    TEXT,
+    FOREIGN KEY(userId) REFERENCES users(id)
+  )`);
+});
+
+// GET /events — return all events for the current user
+app.get('/events', isAuthenticated, (req, res) => {
+  db.all(
+    'SELECT id, title, date FROM events WHERE userId = ? ORDER BY date',
+    [req.session.userId],
+    (err, rows) => {
+      if (err) return res.status(500).json({ message: 'Error fetching events' });
+      res.json(rows);
+    }
+  );
+});
+
+// POST /events — create a new event for the current user
+app.post('/events', isAuthenticated, (req, res) => {
+  const { title, date } = req.body;
+  db.run(
+    'INSERT INTO events(userId, title, date) VALUES(?, ?, ?)',
+    [req.session.userId, title, date],
+    function(err) {
+      if (err) return res.status(500).json({ message: 'Error creating event' });
+      // Return the newly created event
+      res.json({ id: this.lastID, title, date });
+    }
+  );
+});
 
 // ■ Health check ■
 app.get('/', (req, res) => res.send('API up and running 🚀'));

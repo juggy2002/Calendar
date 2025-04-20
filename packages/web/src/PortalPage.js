@@ -1,16 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
+import { getEvents, createEvent, getMessages, sendMessage, markMessageRead, getUsers } from './api';
 
 export default function PortalPage({ user, onLogout }) {
   const [events, setEvents] = useState([]);
   const [showAddEvent, setShowAddEvent] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newDate, setNewDate] = useState('');
+
   const [showPingUser, setShowPingUser] = useState(false);
+  const [pingToId, setPingToId] = useState('');
+  const [pingContent, setPingContent] = useState('');
+  const [usersList, setUsersList] = useState([]);
+
   const [showInbox, setShowInbox] = useState(false);
+  const [messages, setMessages] = useState([]);
+
   const [showNotifications, setShowNotifications] = useState(false);
+
+  // Load events, messages, and user list on mount
+  useEffect(() => {
+    getEvents().then(setEvents).catch(console.error);
+    getMessages().then(setMessages).catch(console.error);
+    getUsers().then(setUsersList).catch(console.error);
+  }, []);
 
   const Modal = ({ title, children, onClose }) => (
     <div style={styles.overlay}>
@@ -22,12 +37,36 @@ export default function PortalPage({ user, onLogout }) {
     </div>
   );
 
-  const handleSaveEvent = () => {
-    if (newTitle && newDate) {
-      setEvents(prev => [...prev, { title: newTitle, date: newDate }]);
-      setNewTitle('');
-      setNewDate('');
-      setShowAddEvent(false);
+  const handleSaveEvent = async () => {
+    if (!newTitle || !newDate) return;
+    try {
+      const ev = await createEvent(newTitle, newDate);
+      setEvents(prev => [...prev, ev]);
+      setNewTitle(''); setNewDate(''); setShowAddEvent(false);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handlePing = async () => {
+    if (!pingToId || !pingContent) return;
+    try {
+      await sendMessage(pingToId, pingContent);
+      const updated = await getMessages();
+      setMessages(updated);
+      setShowPingUser(false);
+      setPingToId(''); setPingContent('');
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleMarkRead = async (id) => {
+    try {
+      await markMessageRead(id);
+      setMessages(msgs => msgs.map(m => m.id === id ? { ...m, read: 1 } : m));
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -87,15 +126,45 @@ export default function PortalPage({ user, onLogout }) {
 
       {showPingUser && (
         <Modal title="Ping User" onClose={() => setShowPingUser(false)}>
-          <input placeholder="Username" style={styles.input} />
-          <textarea placeholder="Message" style={styles.input} />
-          <button style={styles.saveButton}>Send</button>
+          <select
+            style={styles.input}
+            value={pingToId}
+            onChange={e => setPingToId(e.target.value)}
+          >
+            <option value="">Select user</option>
+            {usersList.map(u => (
+              <option key={u.id} value={u.id}>{u.username}</option>
+            ))}
+          </select>
+          <textarea
+            placeholder="Message"
+            style={styles.input}
+            value={pingContent}
+            onChange={e => setPingContent(e.target.value)}
+          />
+          <button style={styles.saveButton} onClick={handlePing}>Send</button>
         </Modal>
       )}
 
       {showInbox && (
         <Modal title="Inbox" onClose={() => setShowInbox(false)}>
-          <p>No new messages</p>
+          {messages.length === 0 ? (
+            <p>No new messages</p>
+          ) : (
+            <ul style={styles.messageList}>
+              {messages.map(m => (
+                <li key={m.id} style={{ opacity: m.read ? 0.6 : 1, marginBottom: 12 }}>
+                  <strong>{m.fromUsername}</strong> <em>({new Date(m.createdAt).toLocaleString()}):</em>
+                  <p>{m.content}</p>
+                  {!m.read && (
+                    <button onClick={() => handleMarkRead(m.id)} style={styles.saveButton}>
+                      Mark as read
+                    </button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
         </Modal>
       )}
 
@@ -128,5 +197,6 @@ const styles = {
   close: { position: 'absolute', top: 12, right: 12, background: 'none', border: 'none', fontSize: 18, cursor: 'pointer' },
   modalTitle: { margin: 0, marginBottom: 12, fontSize: 18, fontWeight: 'bold' },
   input: { width: '100%', padding: 8, marginBottom: 12, border: '1px solid #ccc', borderRadius: 4, fontSize: 16 },
-  saveButton: { padding: '8px 16px', background: '#007bff', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer' }
+  saveButton: { padding: '8px 16px', background: '#007bff', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer' },
+  messageList: { listStyle: 'none', padding: 0 }
 };

@@ -65,3 +65,36 @@ export async function updateUser(id, data) {
   if (!res.ok) throw new Error('Update failed');
   return await res.json();
 }
+
+/** Messages (Ping / Inbox) **/
+
+// Send a ping (message) to a user
+export async function sendMessage(toUserId, content) {
+  const res = await fetch(`${API_URL}/messages`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ toUserId, content })
+  });
+  if (!res.ok) throw new Error((await res.json()).message);
+  return await res.json();
+}
+
+// Fetch inbox for current user
+export async function getMessages() {
+  const res = await fetch(`${API_URL}/messages`, {
+    credentials: 'include'
+  });
+  if (!res.ok) throw new Error('Could not fetch messages');
+  return await res.json(); // array of {id, fromUserId, fromUsername, content, read, createdAt}
+}
+
+// Mark a message read
+export async function markMessageRead(id) {
+  const res = await fetch(`${API_URL}/messages/${id}/read`, {
+    method: 'POST',
+    credentials: 'include'
+  });
+  if (!res.ok) throw new Error('Could not mark read');
+  return await res.json();
+}
