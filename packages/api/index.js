@@ -14,12 +14,14 @@ app.use(cors({
 
 app.use(express.json());
 
+app.set('trust proxy', 1); // ✅ required when behind proxies like Render or Vercel
+
 app.use(session({
   secret: 'your-secret-key',
   resave: false,
   saveUninitialized: true,
   cookie: {
-    secure: true,
+    secure: process.env.NODE_ENV === 'production',
     sameSite: 'none'
   }
 }));
