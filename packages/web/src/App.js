@@ -1,77 +1,84 @@
 // packages/web/src/App.js
-
 import React, { useState, useEffect } from 'react';
 import {
   BrowserRouter,
   Routes,
   Route,
   Navigate,
-  useNavigate,
+  useNavigate
 } from 'react-router-dom';
 
-import { getMe, logout } from './api';      // <-- import your API helpers
+import { getMe, logout } from './api';
 import LoginPage from './LoginPage';
-import HomePage from './HomePage';
+import HomePage from './HomePage';             // admin dashboard
 import CreateUserPage from './CreateUserPage';
-import PortalPage from './PortalPage';
+import PortalPage from './PortalPage';         // regular user portal
 
 function AppRoutes() {
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
 
-  // On initial load, check if already logged in
   useEffect(() => {
     getMe()
       .then(u => {
         setUser(u);
+        // redirect to the correct landing
         if (window.location.pathname === '/login') {
-          navigate('/portal', { replace: true });
+          navigate(u.role === 'admin' ? '/admin' : '/portal', { replace: true });
         }
       })
-      .catch(() => {
-        setUser(null);
-        if (window.location.pathname.startsWith('/portal')) {
-          navigate('/login', { replace: true });
-        }
-      });
+      .catch(() => setUser(null));
   }, [navigate]);
 
-  // Called by LoginPage when login succeeds
-  const handleLogin = userData => {
-    setUser(userData);
-    navigate('/portal');
+  const handleLogin = (u) => {
+    setUser(u);
+    navigate(u.role === 'admin' ? '/admin' : '/portal');
   };
 
-  // Called by PortalPage when logout is clicked
   const handleLogout = async () => {
-    try {
-      await logout();
-      setUser(null);
-      navigate('/login');
-    } catch (err) {
-      console.error('Logout failed', err);
-    }
+    await logout();
+    setUser(null);
+    navigate('/login');
   };
 
-  // If not logged in, force show LoginPage
+  // Not logged in → only /login allowed
   if (!user) {
     return (
       <Routes>
         <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route path="*"    element={<Navigate to="/login" replace />} />
       </Routes>
     );
   }
 
-  // Authenticated routes
+  // Logged in → show role‑specific routes
   return (
     <Routes>
-      <Route path="/login" element={<Navigate to="/portal" replace />} />
-      <Route path="/portal" element={<PortalPage user={user} onLogout={handleLogout} />} />
-      <Route path="/login/admin" element={<HomePage />} />
-      <Route path="/login/admin/create-user" element={<CreateUserPage />} />
-      <Route path="/login/admin/edit-user/:id" element={<CreateUserPage />} />
-      <Route path="*" element={<Navigate to="/portal" replace />} />
+      {/* Prevent returning to /login when authed */}
+      <Route path="/login" element={<Navigate to={user.role === 'admin' ? '/admin' : '/portal'} replace />} />
+
+      {user.role === 'admin' ? (
+        <>
+          {/* Admin dashboard */}
+          <Route path="/admin"                   element={<HomePage />} />
+          <Route path="/admin/create-user"       element={<CreateUserPage />} />
+          <Route path="/admin/edit-user/:id"     element={<CreateUserPage />} />
+
+          {/* Any other path for admin goes to /admin */}
+          <Route path="*" element={<Navigate to="/admin" replace />} />
+        </>
+      ) : (
+        <>
+          {/* Regular user portal */}
+          <Route
+            path="/portal"
+            element={<PortalPage user={user} onLogout={handleLogout} />}
+          />
+
+          {/* Catch-all for users */}
+          <Route path="*" element={<Navigate to="/portal" replace />} />
+        </>
+      )}
     </Routes>
   );
 }
