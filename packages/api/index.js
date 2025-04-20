@@ -12,8 +12,6 @@ app.use(cors({
   credentials: true
 }));
 
-
-
 app.use(express.json());
 
 app.use(session({
@@ -25,7 +23,6 @@ app.use(session({
     sameSite: 'none'
   }
 }));
-
 
 const db = new sqlite3.Database(path.join(__dirname, 'db.sqlite'));
 db.serialize(() => {
@@ -66,7 +63,6 @@ app.post('/login', (req, res) => {
     });
   });
 });
-
 
 app.post('/logout', (req, res) => {
   req.session.destroy(err => {
@@ -142,7 +138,7 @@ app.put('/users/:id', isAuthenticated, (req, res) => {
     res.json({ message: 'User updated' });
   });
 });
-// Optional: health check route
+
 app.get('/', (req, res) => {
   res.send('API is up and running 🚀');
 });
