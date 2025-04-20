@@ -14,17 +14,18 @@ app.use(cors({
 
 app.use(express.json());
 
-app.set('trust proxy', 1); // ✅ required when behind proxies like Render or Vercel
+app.set('trust proxy', 1); // ✅ Required when hosted behind Render/Vercel proxies
 
 app.use(session({
   secret: 'your-secret-key',
   resave: false,
   saveUninitialized: true,
   cookie: {
-    secure: process.env.NODE_ENV === 'production',
+    secure: process.env.NODE_ENV === 'production', // ✅ Works in dev and production
     sameSite: 'none'
   }
 }));
+
 
 const db = new sqlite3.Database(path.join(__dirname, 'db.sqlite'));
 db.serialize(() => {
