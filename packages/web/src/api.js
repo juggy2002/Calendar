@@ -1,4 +1,8 @@
+// packages/web/src/api.js
+
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000';
+
+// ─── Auth & Users ─────────────────────────────────
 
 export async function login(username, password) {
   const res = await fetch(`${API_URL}/login`, {
@@ -66,62 +70,8 @@ export async function updateUser(id, data) {
   return await res.json();
 }
 
-/** Events **/
 
-// Fetch all events for the current user
-export async function getEvents() {
-  const res = await fetch(`${API_URL}/events`, {
-    credentials: 'include'
-  });
-  if (!res.ok) throw new Error('Could not fetch events');
-  return await res.json(); // [{ id, title, date }, …]
-}
-
-// Create a new event
-export async function createEvent(title, date) {
-  const res = await fetch(`${API_URL}/events`, {
-    method: 'POST',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ title, date })
-  });
-  if (!res.ok) throw new Error((await res.json()).message);
-  return await res.json(); // { id, title, date }
-}
-
-/** Messages (Ping / Inbox) **/
-
-// Send a ping (message) to a user
-export async function sendMessage(toUserId, content) {
-  const res = await fetch(`${API_URL}/messages`, {
-    method: 'POST',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ toUserId, content })
-  });
-  if (!res.ok) throw new Error((await res.json()).message);
-  return await res.json();
-}
-
-// Fetch inbox for current user
-export async function getMessages() {
-  const res = await fetch(`${API_URL}/messages`, {
-    credentials: 'include'
-  });
-  if (!res.ok) throw new Error('Could not fetch messages');
-  return await res.json(); // array of {id, fromUserId, fromUsername, content, read, createdAt}
-}
-
-// Mark a message read
-export async function markMessageRead(id) {
-  const res = await fetch(`${API_URL}/messages/${id}/read`, {
-    method: 'POST',
-    credentials: 'include'
-  });
-  if (!res.ok) throw new Error('Could not mark read');
-  return await res.json();
-}
-/** Events **/
+// ─── Events ────────────────────────────────────────
 
 export async function getEvents() {
   const res = await fetch(`${API_URL}/events`, {
@@ -142,7 +92,8 @@ export async function createEvent(title, date) {
   return await res.json();
 }
 
-/** Messages **/
+
+// ─── Messages (Ping / Inbox) ──────────────────────
 
 export async function getMessages() {
   const res = await fetch(`${API_URL}/messages`, {
@@ -168,8 +119,6 @@ export async function markMessageRead(id) {
     method: 'POST',
     credentials: 'include'
   });
-  if (!res.ok) throw new Error('Could not mark read');
+  if (!res.ok) throw new Error('Could not mark message read');
   return await res.json();
 }
-
-// (The getUsers export you already have is used for the ping dropdown)
