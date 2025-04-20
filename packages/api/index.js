@@ -55,9 +55,18 @@ app.post('/login', (req, res) => {
     if (!valid) return res.status(401).json({ message: 'Invalid credentials' });
 
     req.session.userId = user.id;
-    res.json({ message: 'Logged in' });
+
+    // ✅ Force the session to save so the Set-Cookie header is sent
+    req.session.save(err => {
+      if (err) {
+        console.error('Session save error:', err);
+        return res.status(500).json({ message: 'Could not create session' });
+      }
+      res.json({ message: 'Logged in' });
+    });
   });
 });
+
 
 app.post('/logout', (req, res) => {
   req.session.destroy(err => {
