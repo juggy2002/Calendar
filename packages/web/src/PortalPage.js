@@ -2,7 +2,14 @@ import React, { useState, useEffect } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
-import { getEvents, createEvent, getMessages, sendMessage, markMessageRead, getUsers } from './api';
+import {
+  getEvents,
+  createEvent,
+  getMessages,
+  sendMessage,
+  markMessageRead,
+  getUsers
+} from './api';
 
 export default function PortalPage({ user, onLogout }) {
   const [events, setEvents] = useState([]);
@@ -42,7 +49,9 @@ export default function PortalPage({ user, onLogout }) {
     try {
       const ev = await createEvent(newTitle, newDate);
       setEvents(prev => [...prev, ev]);
-      setNewTitle(''); setNewDate(''); setShowAddEvent(false);
+      setNewTitle(''); 
+      setNewDate(''); 
+      setShowAddEvent(false);
     } catch (err) {
       console.error(err);
     }
@@ -55,7 +64,8 @@ export default function PortalPage({ user, onLogout }) {
       const updated = await getMessages();
       setMessages(updated);
       setShowPingUser(false);
-      setPingToId(''); setPingContent('');
+      setPingToId(''); 
+      setPingContent('');
     } catch (err) {
       console.error(err);
     }
@@ -64,7 +74,7 @@ export default function PortalPage({ user, onLogout }) {
   const handleMarkRead = async (id) => {
     try {
       await markMessageRead(id);
-      setMessages(msgs => msgs.map(m => m.id === id ? { ...m, read: 1 } : m));
+      setMessages(ms => ms.map(m => m.id === id ? { ...m, read: 1 } : m));
     } catch (err) {
       console.error(err);
     }
