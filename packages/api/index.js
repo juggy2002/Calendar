@@ -21,10 +21,11 @@ app.use(session({
   resave: false,
   saveUninitialized: true,
   cookie: {
-    secure: false,           // secure should be false in dev (no https)
-    sameSite: 'lax'          // important for cookies in cross-origin
+    secure: true,
+    sameSite: 'none'
   }
 }));
+
 
 const db = new sqlite3.Database(path.join(__dirname, 'db.sqlite'));
 db.serialize(() => {
