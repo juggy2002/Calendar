@@ -11,11 +11,7 @@ app.use(cors({
   origin: ['http://localhost:3000', 'https://calendar-web-rust.vercel.app'],
   credentials: true
 }));
-
-
-
 app.use(express.json());
-
 app.use(session({
   secret: 'your-secret-key',
   resave: false,
@@ -28,6 +24,24 @@ app.use(session({
 
 
 const db = new sqlite3.Database(path.join(__dirname, 'db.sqlite'));
+db.serialize(() => {
+  db.run(\`CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT UNIQUE,
+    password TEXT,
+    role TEXT DEFAULT 'admin'
+  )\`);
+});
+
+function isAuthenticated(req, res, next) {
+  if (req.session.userId) {
+    next();
+  } else {
+    res.status(401).json({ message: 'Unauthorized' });
+  }
+}
+
+// The rest of your route handlers follow...
 db.serialize(() => {
   db.run(`CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
