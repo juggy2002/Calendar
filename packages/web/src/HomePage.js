@@ -1,151 +1,154 @@
+// packages/web/src/HomePage.jsx
+
 import React, { useEffect, useState } from 'react';
-import { logout, getMe, getUsers } from './api';
+import { getUsers, logout } from './api';
 import { useNavigate } from 'react-router-dom';
 
-function HomePage() {
-  const [user, setUser] = useState(null);
+export default function HomePage() {
   const [users, setUsers] = useState([]);
+  const [search, setSearch] = useState('');
   const navigate = useNavigate();
 
+  // Load users once on mount
   useEffect(() => {
-    getMe().then(setUser).catch(() => navigate('/login'));
-    getUsers().then(setUsers).catch(console.error);
-  }, [navigate]);
+    getUsers()
+      .then(data => setUsers(data))
+      .catch(err => console.error(err));
+  }, []);
+
+  // Handlers
+  const handleCreate = () => {
+    navigate('/admin/create-user');
+  };
+
+  const handleEdit = (id) => {
+    navigate(`/admin/edit-user/${id}`);
+  };
 
   const handleLogout = async () => {
-    await logout();
-    navigate('/login');
+    try {
+      await logout();
+      navigate('/login');
+    } catch (err) {
+      console.error('Logout failed', err);
+    }
   };
 
-  const handleCreateUser = () => navigate('/login/admin/create-user');
-
-  const handleEditUser = (id) => {
-    navigate(`/login/admin/edit-user/${id}`);
-  };
+  // Filtered list
+  const filtered = users.filter(u =>
+    u.username.toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
-    <div style={styles.wrapper}>
-      <aside style={styles.sidebar}>
-        <h2>Admin</h2>
-        <button style={styles.createButton} onClick={handleCreateUser}>
-          <span style={styles.blueDot}></span> Create User
-        </button>
-        <button style={styles.logoutButton} onClick={handleLogout}>
-          <span style={styles.redDot}></span> Logout
+    <div style={{ display: 'flex', height: '100vh' }}>
+      {/* Sidebar */}
+      <aside style={{
+        width: 200,
+        background: '#f7f7f7',
+        padding: 20,
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between'
+      }}>
+        <div>
+          <h2>Admin</h2>
+          <button
+            onClick={handleCreate}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              padding: '8px 12px',
+              marginTop: 20,
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: 16
+            }}
+          >
+            <span style={{
+              width: 10, height: 10, borderRadius: '50%', background: '#2ecc71', display: 'inline-block'
+            }} />
+            Create User
+          </button>
+        </div>
+        <button
+          onClick={handleLogout}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            padding: '8px 12px',
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            color: '#e74c3c',
+            fontSize: 16
+          }}
+        >
+          <span style={{
+            width: 10, height: 10, borderRadius: '50%', background: '#e74c3c', display: 'inline-block'
+          }} />
+          Logout
         </button>
       </aside>
-      <main style={styles.main}>
-        <h2>Current Users</h2>
-        <input type="text" placeholder="Search Users" style={styles.search} />
-        {users.map(u => (
-          <div key={u.id} style={styles.userCard}>
-            <span>{u.username}</span>
-            <div>
-              <button
-                style={styles.editButton}
-                onClick={() => handleEditUser(u.id)}
-              >
-                Edit
-              </button>
-              <span style={styles.rolePill}>{u.role}</span>
+
+      {/* Main content */}
+      <main style={{ flex: 1, padding: 20, overflowY: 'auto' }}>
+        <h1>Current Users</h1>
+        <input
+          type="text"
+          placeholder="Search Users"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          style={{
+            width: '100%',
+            padding: 8,
+            marginBottom: 20,
+            borderRadius: 4,
+            border: '1px solid #ccc'
+          }}
+        />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {filtered.map(user => (
+            <div
+              key={user.id}
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '12px 16px',
+                border: '1px solid #eee',
+                borderRadius: 4
+              }}
+            >
+              <span>{user.username}</span>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  onClick={() => handleEdit(user.id)}
+                  style={{
+                    padding: '6px 12px',
+                    border: '1px solid #333',
+                    background: 'none',
+                    cursor: 'pointer',
+                    borderRadius: 4
+                  }}
+                >
+                  Edit
+                </button>
+                <span style={{
+                  padding: '6px 12px',
+                  background: '#333',
+                  color: '#fff',
+                  borderRadius: 4
+                }}>
+                  {user.role}
+                </span>
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </main>
     </div>
   );
 }
-
-const styles = {
-  wrapper: {
-    display: 'flex',
-    height: '100vh',
-    fontFamily: 'Arial, sans-serif',
-  },
-  sidebar: {
-    width: '220px',
-    borderRight: '1px solid #eee',
-    padding: '1rem',
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'space-between',
-  },
-  createButton: {
-    background: '#f0f0f0',
-    padding: '0.5rem 1rem',
-    border: 'none',
-    borderRadius: '8px',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.5rem',
-    cursor: 'pointer',
-    fontWeight: '500',
-    marginTop: '1rem',
-  },
-  blueDot: {
-    width: '10px',
-    height: '10px',
-    backgroundColor: '#3b82f6',
-    borderRadius: '50%',
-    display: 'inline-block',
-  },
-  redDot: {
-    width: '10px',
-    height: '10px',
-    backgroundColor: '#ef4444',
-    borderRadius: '50%',
-    display: 'inline-block',
-  },
-  logoutButton: {
-    background: 'transparent',
-    border: 'none',
-    color: '#333',
-    fontSize: '0.9rem',
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.5rem',
-    marginTop: 'auto',
-  },
-  main: {
-    flexGrow: 1,
-    padding: '2rem',
-    overflowY: 'auto',
-  },
-  search: {
-    padding: '0.75rem',
-    width: '100%',
-    maxWidth: '400px',
-    margin: '1rem 0',
-    borderRadius: '8px',
-    border: '1px solid #ccc',
-  },
-  userCard: {
-    background: '#fff',
-    border: '1px solid #ddd',
-    borderRadius: '10px',
-    padding: '1rem',
-    marginBottom: '1rem',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  editButton: {
-    padding: '0.5rem 1rem',
-    borderRadius: '6px',
-    border: '1px solid #999',
-    background: '#f5f5f5',
-    cursor: 'pointer',
-    marginRight: '0.5rem',
-  },
-  rolePill: {
-    display: 'inline-block',
-    background: '#111',
-    color: '#fff',
-    padding: '0.4rem 1rem',
-    borderRadius: '8px',
-    fontSize: '0.8rem',
-  },
-};
-
-export default HomePage;
