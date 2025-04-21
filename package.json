@@ -4,9 +4,11 @@
     "packages/*"
   ],
   "scripts": {
+    "migrate": "node packages/api/migrate.js",
     "start:api": "node packages/api/index.js",
-    "start:web": "yarn workspace web start",
-    "start": "concurrently \"yarn run start:api\" \"yarn run start:web\""
+    "start-web": "yarn workspace web start",
+    "start": "concurrently \"yarn run start:api\" \"yarn run start-web\"",
+    "dev": "npm run migrate && yarn run start"
   },
   "dependencies": {
     "@fullcalendar/daygrid": "^6.1.17",

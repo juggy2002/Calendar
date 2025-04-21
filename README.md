@@ -1,23 +1,45 @@
 # Monorepo WebApp
 
-## Setup
+# Calendar App
 
-```bash
+## Getting Started Locally
+
+1. **Clone** this repo  
+   ```bash
+   git clone https://github.com/juggy2002/Calendar.git
+   cd Calendar
+
 yarn install
-```
 
-## Running
 
-Start both API and Web servers:
+npm run migrate
+# → creates db.sqlite in packages/api
+# → seeds default user: admin / admin123
+
+Backend: http://localhost:4000
+Frontend: http://localhost:3000
+
+# build frontend only
+cd packages/web && yarn build
+
+# spin up only the API
+npm run start:api
+
+## 3. Install `concurrently`
 
 ```bash
-yarn start
-```
+cd Calendar
+yarn add --dev concurrently
 
-- API: http://localhost:4000
-- Web: http://localhost:3000
+npm run dev
 
-## Access
 
-Use the login page to authenticate. Create users via the "Create User" button.
-x
+git clone … 
+yarn install
+npm run dev
+
+or visit
+
+FE: calendar-web-rust.vercel.app
+
+BE: https://calendar-genq.onrender.com
