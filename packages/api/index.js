@@ -263,6 +263,30 @@ app.post('/messages/:id/read', isAuthenticated, (req, res) => {
   );
 });
 
+const { Configuration, OpenAIApi } = require("openai");
+
+const openai = new OpenAIApi(new Configuration({
+  apiKey: process.env.OPENAI_API_KEY,
+}));
+
+app.post('/chat', isAuthenticated, async (req, res) => {
+  const { prompt } = req.body;
+
+  try {
+    const response = await openai.createChatCompletion({
+      model: "gpt-3.5-turbo",
+      messages: [{ role: "user", content: prompt }]
+    });
+
+    const message = response.data.choices[0].message.content;
+    res.json({ message });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Chat failed' });
+  }
+});
+
+
 // ■ Health check ■
 app.get('/', (req, res) => res.send('API up and running 🚀'));
 
