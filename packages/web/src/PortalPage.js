@@ -25,9 +25,12 @@ export default function PortalPage({ user, onLogout }) {
   const [showInbox, setShowInbox] = useState(false);
   const [messages, setMessages] = useState([]);
 
+  const [showChatGPT, setShowChatGPT] = useState(false);
+  const [chatInput, setChatInput] = useState('');
+  const [chatResponse, setChatResponse] = useState('');
+
   const [showNotifications, setShowNotifications] = useState(false);
 
-  // Load events, messages, and user list on mount
   useEffect(() => {
     getEvents().then(setEvents).catch(console.error);
     getMessages().then(setMessages).catch(console.error);
@@ -49,8 +52,8 @@ export default function PortalPage({ user, onLogout }) {
     try {
       const ev = await createEvent(newTitle, newDate);
       setEvents(prev => [...prev, ev]);
-      setNewTitle(''); 
-      setNewDate(''); 
+      setNewTitle('');
+      setNewDate('');
       setShowAddEvent(false);
     } catch (err) {
       console.error(err);
@@ -64,8 +67,7 @@ export default function PortalPage({ user, onLogout }) {
       const updated = await getMessages();
       setMessages(updated);
       setShowPingUser(false);
-      setPingToId(''); 
-      setPingContent('');
+      setPingToId(''); setPingContent('');
     } catch (err) {
       console.error(err);
     }
@@ -74,10 +76,15 @@ export default function PortalPage({ user, onLogout }) {
   const handleMarkRead = async (id) => {
     try {
       await markMessageRead(id);
-      setMessages(ms => ms.map(m => m.id === id ? { ...m, read: 1 } : m));
+      setMessages(msgs => msgs.map(m => m.id === id ? { ...m, read: 1 } : m));
     } catch (err) {
       console.error(err);
     }
+  };
+
+  const handleChatSubmit = () => {
+    setChatResponse("🤖 I’m not connected to OpenAI yet, but I’m listening!");
+    setChatInput('');
   };
 
   return (
@@ -105,6 +112,7 @@ export default function PortalPage({ user, onLogout }) {
       <div style={styles.main}>
         <header style={styles.header}>
           <button onClick={() => setShowInbox(true)} style={styles.iconButton}>🔔</button>
+          <button onClick={() => setShowChatGPT(true)} style={styles.iconButton}>🧠</button>
         </header>
         <div style={styles.calendarWrapper}>
           <FullCalendar
@@ -116,72 +124,16 @@ export default function PortalPage({ user, onLogout }) {
         </div>
       </div>
 
-      {showAddEvent && (
-        <Modal title="Create Event" onClose={() => setShowAddEvent(false)}>
-          <input
-            placeholder="Event Title"
-            style={styles.input}
-            value={newTitle}
-            onChange={e => setNewTitle(e.target.value)}
-          />
-          <input
-            type="date"
-            style={styles.input}
-            value={newDate}
-            onChange={e => setNewDate(e.target.value)}
-          />
-          <button style={styles.saveButton} onClick={handleSaveEvent}>Save</button>
-        </Modal>
-      )}
-
-      {showPingUser && (
-        <Modal title="Ping User" onClose={() => setShowPingUser(false)}>
-          <select
-            style={styles.input}
-            value={pingToId}
-            onChange={e => setPingToId(e.target.value)}
-          >
-            <option value="">Select user</option>
-            {usersList.map(u => (
-              <option key={u.id} value={u.id}>{u.username}</option>
-            ))}
-          </select>
+      {showChatGPT && (
+        <Modal title="Ask ChatGPT" onClose={() => setShowChatGPT(false)}>
           <textarea
-            placeholder="Message"
+            placeholder="Ask a question..."
             style={styles.input}
-            value={pingContent}
-            onChange={e => setPingContent(e.target.value)}
+            value={chatInput}
+            onChange={e => setChatInput(e.target.value)}
           />
-          <button style={styles.saveButton} onClick={handlePing}>Send</button>
-        </Modal>
-      )}
-
-      {showInbox && (
-        <Modal title="Inbox" onClose={() => setShowInbox(false)}>
-          {messages.length === 0 ? (
-            <p>No new messages</p>
-          ) : (
-            <ul style={styles.messageList}>
-              {messages.map(m => (
-                <li key={m.id} style={{ opacity: m.read ? 0.6 : 1, marginBottom: 12 }}>
-                  <strong>{m.fromUsername}</strong> <em>({new Date(m.createdAt).toLocaleString()}):</em>
-                  <p>{m.content}</p>
-                  {!m.read && (
-                    <button onClick={() => handleMarkRead(m.id)} style={styles.saveButton}>
-                      Mark as read
-                    </button>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
-        </Modal>
-      )}
-
-      {showNotifications && (
-        <Modal title="Notifications" onClose={() => setShowNotifications(false)}>
-          <p>No unread notifications</p>
-          <button style={styles.saveButton}>Mark all as read</button>
+          <button onClick={handleChatSubmit} style={styles.saveButton}>Ask</button>
+          {chatResponse && <p style={{ marginTop: 10 }}>{chatResponse}</p>}
         </Modal>
       )}
     </div>
@@ -199,7 +151,7 @@ const styles = {
   dotGreen: { width: 10, height: 10, borderRadius: '50%', background: '#2ecc71' },
   dotRed: { width: 10, height: 10, borderRadius: '50%', background: '#e74c3c' },
   main: { flex: 1, display: 'flex', flexDirection: 'column' },
-  header: { padding: 16, display: 'flex', justifyContent: 'flex-end', borderBottom: '1px solid #ddd' },
+  header: { padding: 16, display: 'flex', justifyContent: 'flex-end', borderBottom: '1px solid #ddd', gap: 10 },
   iconButton: { fontSize: 24, background: 'none', border: 'none', cursor: 'pointer' },
   calendarWrapper: { flex: 1, padding: 20, background: '#fff' },
   overlay: { position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 },
@@ -207,6 +159,5 @@ const styles = {
   close: { position: 'absolute', top: 12, right: 12, background: 'none', border: 'none', fontSize: 18, cursor: 'pointer' },
   modalTitle: { margin: 0, marginBottom: 12, fontSize: 18, fontWeight: 'bold' },
   input: { width: '100%', padding: 8, marginBottom: 12, border: '1px solid #ccc', borderRadius: 4, fontSize: 16 },
-  saveButton: { padding: '8px 16px', background: '#007bff', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer' },
-  messageList: { listStyle: 'none', padding: 0 }
+  saveButton: { padding: '8px 16px', background: '#007bff', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer' }
 };
