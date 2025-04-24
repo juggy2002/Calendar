@@ -84,7 +84,7 @@ export default function PortalPage({ user, onLogout }) {
 
   const handleChatSubmit = async () => {
     try {
-      const res = await fetch('/chat', {
+      const res = await fetch('https://calendar-genq.onrender.com/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
