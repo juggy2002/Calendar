@@ -263,11 +263,12 @@ app.post('/messages/:id/read', isAuthenticated, (req, res) => {
   );
 });
 
-const { Configuration, OpenAIApi } = require("openai");
+const OpenAI = require('openai');
 
-const openai = new OpenAIApi(new Configuration({
-  apiKey: process.env.OPENAI_API_KEY,
-}));
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+});
+
 
 app.post('/chat', isAuthenticated, async (req, res) => {
   const { prompt } = req.body;
