@@ -13,6 +13,7 @@ import LoginPage from './LoginPage';
 import HomePage from './HomePage';             // admin dashboard
 import CreateUserPage from './CreateUserPage';
 import PortalPage from './PortalPage';         // regular user portal
+import { Analytics } from "@vercel/analytics/react" // vercel analytics
 
 function AppRoutes() {
   const [user, setUser] = useState(null);
