@@ -82,10 +82,22 @@ export default function PortalPage({ user, onLogout }) {
     }
   };
 
-  const handleChatSubmit = () => {
-    setChatResponse("🤖 I’m not connected to OpenAI yet, but I’m listening!");
+  const handleChatSubmit = async () => {
+    try {
+      const res = await fetch('/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ prompt: chatInput })
+      });
+      const data = await res.json();
+      setChatResponse(data.message);
+    } catch (err) {
+      setChatResponse("Error getting response from GPT.");
+    }
     setChatInput('');
   };
+  
 
   return (
     <div style={styles.container}>

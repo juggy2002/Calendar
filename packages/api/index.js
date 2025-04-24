@@ -263,32 +263,29 @@ app.post('/messages/:id/read', isAuthenticated, (req, res) => {
   );
 });
 
-// ───────── ChatGPT integration ──────────────────────
-require('dotenv').config();
-const { Configuration, OpenAIApi } = require('openai');
+const { Configuration, OpenAIApi } = require("openai");
 
-// OpenAI setup
 const openai = new OpenAIApi(new Configuration({
-  apiKey: process.env.OPENAI_API_KEY
+  apiKey: process.env.OPENAI_API_KEY,
 }));
 
-// POST /chat
 app.post('/chat', isAuthenticated, async (req, res) => {
-  const { messages } = req.body;
+  const { prompt } = req.body;
 
   try {
     const response = await openai.createChatCompletion({
-      model: 'gpt-3.5-turbo',
-      messages // array of {role: "user" | "assistant", content: "text"}
+      model: "gpt-3.5-turbo",
+      messages: [{ role: "user", content: prompt }]
     });
 
-    const reply = response.data.choices[0].message;
-    res.json({ reply });
+    const message = response.data.choices[0].message.content;
+    res.json({ message });
   } catch (err) {
-    console.error('ChatGPT error:', err.response?.data || err.message);
-    res.status(500).json({ message: 'Failed to get response from GPT' });
+    console.error(err);
+    res.status(500).json({ error: 'Chat failed' });
   }
 });
+
 
 // ■ Health check ■
 app.get('/', (req, res) => res.send('API up and running 🚀'));
